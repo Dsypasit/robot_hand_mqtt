@@ -26,6 +26,7 @@ class MQTTManager{
       print('client connecting....');
       _currentState.setAppConnectionState(MQTTAppConnectionState.connecting);
       await client.connect();
+      _currentState.setAppConnectionState(MQTTAppConnectionState.connected);
       print('connecting success');
     } on Exception catch (e) {
       print('client exception - $e');
@@ -76,6 +77,12 @@ class MQTTManager{
 
     print('Publishing message "$message" to topic ${'Dart/Mqtt_client/testtopic'}');
     client.publishMessage('Dart/Mqtt_client/testtopic', MqttQos.exactlyOnce, builder.payload!);
+  }
+
+  void disconnect(){
+    _currentState.setAppConnectionState(MQTTAppConnectionState.disconnected);
+    print('OnDisconnected client callback - Client disconnection');
+    client.disconnect();
   }
 
   // callbacks for different events

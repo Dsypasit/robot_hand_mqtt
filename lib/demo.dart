@@ -20,7 +20,7 @@ class _DemoState extends State<Demo>{
   late MQTTAppState currentState;
   late MQTTManager manager;
 
-  int? _result;
+  String? _result;
 
   @override
   void initSate(){
@@ -90,14 +90,14 @@ class _DemoState extends State<Demo>{
                     style: TextStyle(color: Colors.white)
                   ),
                   onPressed: currentState.getAppConnectionState == MQTTAppConnectionState.connected
-                   ?calculateRobot
+                   ? calculateRobot
                    : null,
                 ),
               ],
             ),
             SizedBox(height:30),
             Text(
-              _result == null ? "Enter Value": "${_result.toString()}"
+              _prepareStateMessageFrom(currentState.getAppConnectionState)
             )
           ],
         )
@@ -140,12 +140,8 @@ class _DemoState extends State<Demo>{
   }
 
   void disconnect (){
-    if (_result == null){
-      _result = 1;
-      setState(() {});
-      return;
-    }
-    _result = _result! + 1;
+    manager.disconnect();
+    _result = _prepareStateMessageFrom(currentState.getAppConnectionState);
     setState(() {});
   }
 
