@@ -68,6 +68,7 @@ class MQTTManager{
 
       print('YOU GOT A NEW MESSAGE:');
       print(message);
+      _currentState.setReceivedText(message);
     });
   }
 

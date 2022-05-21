@@ -20,7 +20,41 @@ class _DemoState extends State<Demo>{
   late MQTTAppState currentState;
   late MQTTManager manager;
 
-  String? _result;
+  String? get _xErrorValue{
+    final text = _xAxisController.value.text;
+    if (text.isEmpty){
+      return 'Cant\'t be empty';
+    }
+    int value = int.parse(text);
+    if (value<0 || value>180){
+      return 'please input between 0-180';
+    }
+    return null;
+  }
+
+  String? get _yErrorValue{
+    final text = _yAxisController.value.text;
+    if (text.isEmpty){
+      return 'Cant\'t be empty';
+    }
+    int value = int.parse(text);
+    if (value<0 || value>180){
+      return 'please input between 0-180';
+    }
+    return null;
+  }
+
+  String? get _zErrorValue{
+    final text = _zAxisController.value.text;
+    if (text.isEmpty){
+      return 'Cant\'t be empty';
+    }
+    int value = int.parse(text);
+    if (value<0 || value>180){
+      return 'please input between 0-180';
+    }
+    return null;
+  }
 
   @override
   void initSate(){
@@ -50,13 +84,16 @@ class _DemoState extends State<Demo>{
         padding: EdgeInsets.symmetric(horizontal: 10.0),
         child: Column(
           children: <Widget>[
+            _buildConnectionStateText(_prepareStateMessageFrom(currentState.getAppConnectionState)),
             TextField(
               controller: _xAxisController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'X axis',
                 icon: Icon(Icons.list_outlined),
+                errorText: _xErrorValue,
               ),
+              onChanged: (_) => setState(() {}),
             ),
             SizedBox(height: 20,),
             TextField(
@@ -65,7 +102,9 @@ class _DemoState extends State<Demo>{
               decoration: InputDecoration(
                 labelText: 'Y axis',
                 icon: Icon(Icons.list_outlined),
+                errorText: _yErrorValue,
               ),
+              onChanged: (_) => setState(() {}),
             ),
             SizedBox(height: 20,),
             TextField(
@@ -74,7 +113,9 @@ class _DemoState extends State<Demo>{
               decoration: InputDecoration(
                 labelText: 'Z axis',
                 icon: Icon(Icons.list_outlined),
+                errorText: _zErrorValue,
               ),
+              onChanged: (_) => setState(() {}),
             ),
             SizedBox(height: 20,),
             _buildConnecteButtonFrom(currentState.getAppConnectionState),
@@ -89,7 +130,8 @@ class _DemoState extends State<Demo>{
                     "Calculate",
                     style: TextStyle(color: Colors.white)
                   ),
-                  onPressed: currentState.getAppConnectionState == MQTTAppConnectionState.connected
+                  onPressed: (currentState.getAppConnectionState == MQTTAppConnectionState.connected)
+                  && checkEmpty()
                    ? calculateRobot
                    : null,
                 ),
@@ -97,11 +139,29 @@ class _DemoState extends State<Demo>{
             ),
             SizedBox(height:30),
             Text(
-              _prepareStateMessageFrom(currentState.getAppConnectionState)
+              currentState.getReceivedText
             )
           ],
         )
       )
+    );
+  }
+
+  bool checkEmpty(){
+    return _xAxisController.value.text.isNotEmpty && _yAxisController.value.text.isNotEmpty && _zAxisController.value.text.isNotEmpty;
+  }
+
+  Widget _buildConnectionStateText(String state){
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Container(
+              color: currentState.getAppConnectionState != MQTTAppConnectionState.connected ? 
+              Colors.deepOrangeAccent
+              : Colors.greenAccent,
+              child: Text(state, textAlign: TextAlign.center)),
+        ),
+      ],
     );
   }
 
@@ -134,15 +194,13 @@ class _DemoState extends State<Demo>{
   }
 
   void calculateRobot (){
-    final String message = _xAxisController.text + "," + _yAxisController.text + "," + _zAxisController.text;
+    final String message = "F"+_xAxisController.text + "," + _yAxisController.text + "," + _zAxisController.text;
     print(message);
     manager.publishMessage(message);
   }
 
   void disconnect (){
     manager.disconnect();
-    _result = _prepareStateMessageFrom(currentState.getAppConnectionState);
-    setState(() {});
   }
 
   String _prepareStateMessageFrom(MQTTAppConnectionState state) {
