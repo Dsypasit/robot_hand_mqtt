@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:math' as math;
+import 'package:vector_math/vector_math.dart' as vector;
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:robot_hand/MQTTManager.dart';
@@ -194,6 +196,7 @@ class _DemoState extends State<Demo>{
   }
 
   void calculateRobot (){
+
     final String message = "F"+_xAxisController.text + "," + _yAxisController.text + "," + _zAxisController.text;
     print(message);
     manager.publishMessage(message);
@@ -217,6 +220,50 @@ class _DemoState extends State<Demo>{
   void connect(){
     manager = MQTTManager(state: currentState);
     manager.prepareMqttClient();
+  }
+
+  List getPoint(int x, int y, int z, int base, int arm1, int arm2, int alpha){
+    num e = (math.pow(x, 2) + math.pow(y,2) + math.pow(z, 2) - math.pow(base, 2) - math.pow(arm1, 2) - math.pow(arm2, 2))/2;
+    num a1, b1, c1, a, b, c;
+
+    if (x!= 0 || y!= 0){
+      a1 = ((math.pow((z-base),2)*math.pow(1+math.tan(alpha), 2))/math.pow(x+y*math.tan(alpha), 2)) +1;
+      b1 = 2*((e*(z-base)*(1+math.pow(math.tan(alpha) ,2)))/ (math.pow(x+y*math.tan(alpha), 2)) + base);
+      c1 = (math.pow(e, 2) * (1+math.pow(math.tan(alpha), 2)))/(math.pow(x+y*math.tan(alpha), 2)) + math.pow(base, 2) - math.pow(arm1, 2);
+
+      num d1 = math.pow((math.pow(b1, 2) - 4*a1*c1), 0.5);
+
+      c = (b1+d1)/(2*a1);
+      a = (e - c*(z-base))/(x + y*math.tan(alpha));
+      b = a*math.tan(alpha);
+    }else{
+      a = 0;
+      b = 0;
+      c = 0;
+    }
+    return [a, b, c];
+  }
+
+  List getAngle(x, y, z, base, arm1, arm2){
+    num alpha, beta, gamma;
+    num d = math.pow(math.pow(x, 2) + math.pow(y, 2) + math.pow(z-base, 2), 0.5);
+    if(x != 0){
+      alpha = math.atan(y/x);
+    }else{
+      alpha = math.pi/2;
+    }
+
+    num theta1 = math.asin((z-base)/d);
+    num theta2 = math.acos((math.pow(arm1, 2) + math.pow(d, 2) - math.pow(arm2, 2))/(2*arm1*d));
+
+    beta = theta1 + theta2;
+
+    gamma = math.acos((math.pow(arm1, 2) + math.pow(arm2, 2) - math.pow(d, 2))/(2*arm1*arm2));
+
+    alpha = vector.degrees(alpha.toDouble());
+    beta = vector.degrees(beta.toDouble());
+    gamma = vector.degrees(gamma.toDouble());
+    return [alpha, beta, gamma];
   }
 
 }
